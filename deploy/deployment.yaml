@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: morpheus-feedback-api
+  labels:
+    app: morpheus-feedback-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: morpheus-feedback-api
+  template:
+    metadata:
+      labels:
+        app: morpheus-feedback-api
+    spec:
+      containers:
+        - name: flask-service
+          image: your-registry/argilla-feedback-gateway:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: ARGILLA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: argilla-secrets
+                  key: api_key
+            - name: ARGILLA_API_URL
+              value: "http://localhost:8080"   # Internal Argilla endpoint
+        - name: argilla-server
+          image: argilla/argilla-server:latest
+          ports:
+            - containerPort: 8080
+        - name: argilla-worker
+          image: argilla/argilla-worker:latest
+        - name: redis
+          image: redis:6
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.17.3
+          env:
+            - name: discovery.type
+              value: "single-node"
+        - name: postgresql
+          image: postgres:13
+          env:
+            - name: POSTGRES_USER
+              value: "argilla"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: argilla-secrets
+                  key: postgres_password
+            - name: POSTGRES_DB
+              value: "argilla_db"
