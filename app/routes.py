@@ -1,13 +1,16 @@
 from flask import Blueprint, request, jsonify
-from .sdk import process_request
+from .sdk import process_feedback
 
 api_blueprint = Blueprint('api', __name__, url_prefix='/api')
 
-
-@api_blueprint.route('/process', methods=['POST'])
-def process():
-    data = request.get_json()  # Retrieve incoming feedback data
-    result = process_request(data)  # Process data with Argilla SDK helper
+@api_blueprint.route('/feedback', methods=['POST'])
+def feedback():
+    """
+    Receives user feedback from the Quarkus app and
+    submits it to Argilla via the SDK.
+    """
+    data = request.get_json()
+    result = process_feedback(data)
     return jsonify(result)
 
 
