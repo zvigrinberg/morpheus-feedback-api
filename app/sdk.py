@@ -1,19 +1,25 @@
 import argilla as rg
+from argilla import Query, Filter
 from flask import current_app
+
 
 def init_argilla(app):
     """
-    Initialize the Argilla client once at app startup,
+    Initialize the Argilla SDK client once at app startup,
     pointing at the configured workspace.
     """
+    print("Initializing Argilla SDK...")
+
     app.argilla_client = rg.Argilla(
         api_url=app.config['ARGILLA_API_URL'],
         api_key=app.config['ARGILLA_API_KEY'],
     )
+    print("Done Initializing Argilla SDK...")
+
 
 def process_feedback(data):
     """
-    Submits feedback data as an rg.Record to the configured Argilla dataset,
+    Submits feedback data as a rg.Record to the configured Argilla dataset,
     auto-creating the dataset if it does not exist.
     Postman test:localhost:5001/api/feedback
     {
@@ -22,41 +28,136 @@ def process_feedback(data):
     "rating": "5",
     "comment": "Everything looks good!"
     }
-
     """
     try:
-        client  = current_app.argilla_client
-        ws      = current_app.config['ARGILLA_WORKSPACE']
+        client = current_app.argilla_client
+        ws = current_app.config['ARGILLA_WORKSPACE']
         ds_name = current_app.config['ARGILLA_DATASET']
 
         # 1) Load your pre‑created dataset
         dataset = client.datasets(name=ds_name, workspace=ws)
         if dataset is None:
             return {
-                "status":  "error",
+                "status": "error",
                 "message": f"Dataset '{ds_name}' not found in workspace '{ws}'",
-                "data":    data
+                "data": data
             }
 
-        # 2) Build a single Record
+        # 2) Ensure Metadata is Set Correctly
+        # metadata = data.get("metadata", {})
+        report_id = data.get("reportId")
+
+        print(f"Logging feedback with id: {report_id}")
+
+        # 3) Build a Record using SDK (fields and metadata)
+        # record = rg.Record(
+        #     id=report_id,
+        #     fields={
+        #         "response": data.get("response"),
+        #         "thumbs": data.get("thumbs"),
+        #         "rating": int(data.get("rating")),
+        #         "comment": data.get("comment")
+        #     },
+        # )
+
+        # # 4) Log the Record using SDK
+        # dataset.records.log([record])
+
+        # 3) Build a dictionary with metadata
+        # record_dict = {
+        #     "id": report_id,           # ← this becomes external_id
+        #     "fields": {
+        #         "response": data.get("response"),
+        #         "thumbs":   data.get("thumbs"),
+        #         "rating":   int(data.get("rating")),
+        #         "comment":  data.get("comment"),
+        #     },
+        # }
         record_dict = {
-            "response": data["response"],
-            "thumbs":   data["thumbs"],
-            "rating":   int(data["rating"]),
-            "comment":  data["comment"],
+            "id": report_id,
+            "response": data.get("response"),
+            "thumbs": data.get("thumbs"),
+            "rating": int(data.get("rating")),
+            "comment": data.get("comment"),
+            "assessment": data.get("assessment"),
         }
 
-        # 3) Log it
+        # 4) Log the Record using Dictionary
         dataset.records.log([record_dict])
 
         return {
             "status": "success",
-            "data":   data
+            "data": data
         }
 
     except Exception as e:
         return {
-            "status":  "error",
+            "status": "error",
             "message": str(e),
-            "data":    data
+            "data": data
         }
+
+
+def check_feedback_exists(reportId):
+    """
+    Checks if feedback has already been submitted for a given report ID in Argilla,
+    by querying on the record external_id.
+    """
+    try:
+        client = current_app.argilla_client
+        ws = current_app.config["ARGILLA_WORKSPACE"]
+        ds_name = current_app.config["ARGILLA_DATASET"]
+
+        print(f"Connecting to Argilla: Workspace={ws}, Dataset={ds_name}")
+
+        # Load the dataset
+        dataset = client.datasets(name=ds_name, workspace=ws)
+        if not dataset:
+            print("Dataset not found.")
+            return False
+
+        # Build a filter on the record external_id (which you set via `id=reportId`)
+        filter_id = Filter(("id", "==", reportId))
+        query = Query(filter=filter_id)
+
+        # Execute the query and collect matches
+        matches = dataset.records(query=query).to_list(flatten=True)
+
+        print(f"Existing feedback count for reportId {reportId}: {len(matches)}")
+        return len(matches) > 0
+
+    except Exception as e:
+        current_app.logger.error(
+            f"Error checking feedback for reportId '{reportId}': {e}"
+        )
+        return False
+
+# def check_feedback_exists(reportId):
+#     """
+#     Checks if feedback has already been submitted for a given report ID in Argilla.
+#     """
+#     try:
+#         client = current_app.argilla_client
+#         ws = current_app.config['ARGILLA_WORKSPACE']
+#         ds_name = current_app.config['ARGILLA_DATASET']
+#
+#         print(f"Connecting to Argilla: Workspace={ws}, Dataset={ds_name}")
+#
+#         # Load the dataset using SDK
+#         dataset = client.datasets(name=ds_name, workspace=ws)
+#         if not dataset:
+#             print("Dataset not found.")
+#             return False
+#
+#         # Query records using SDK (metadata.reportId should match your field)
+#         existing_records = [
+#             record for record in dataset.records()
+#             if record.metadata and record.metadata.get("reportId") == reportId
+#         ]
+#
+#         print(f"Existing feedback count for reportId {reportId}: {len(existing_records)}")
+#         return len(existing_records) > 0
+#
+#     except Exception as e:
+#         current_app.logger.error(f"Error checking feedback for reportId '{reportId}': {str(e)}")
+#         return False
