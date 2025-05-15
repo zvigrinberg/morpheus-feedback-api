@@ -49,30 +49,6 @@ def process_feedback(data):
 
         print(f"Logging feedback with id: {report_id}")
 
-        # 3) Build a Record using SDK (fields and metadata)
-        # record = rg.Record(
-        #     id=report_id,
-        #     fields={
-        #         "response": data.get("response"),
-        #         "thumbs": data.get("thumbs"),
-        #         "rating": int(data.get("rating")),
-        #         "comment": data.get("comment")
-        #     },
-        # )
-
-        # # 4) Log the Record using SDK
-        # dataset.records.log([record])
-
-        # 3) Build a dictionary with metadata
-        # record_dict = {
-        #     "id": report_id,           # ← this becomes external_id
-        #     "fields": {
-        #         "response": data.get("response"),
-        #         "thumbs":   data.get("thumbs"),
-        #         "rating":   int(data.get("rating")),
-        #         "comment":  data.get("comment"),
-        #     },
-        # }
         record_dict = {
             "id": report_id,
             "response": data.get("response"),
@@ -80,6 +56,10 @@ def process_feedback(data):
             "rating": int(data.get("rating")),
             "comment": data.get("comment"),
             "assessment": data.get("assessment"),
+            "reason": data.get("reason"),
+            "summary": data.get("summary"),
+            "qClarity": data.get("qClarity"),
+            "aAgreement": data.get("aAgreement"),
         }
 
         # 4) Log the Record using Dictionary
