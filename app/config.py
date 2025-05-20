@@ -3,4 +3,4 @@ class Config:
     ARGILLA_API_KEY = 'argilla.apikey'
     ARGILLA_API_URL = 'http://localhost:6900/'  # Internal endpoint
     ARGILLA_DATASET  = 'feedback-ai'
-    ARGILLA_WORKSPACE = 'olga'
+    ARGILLA_WORKSPACE = 'rh-argilla'

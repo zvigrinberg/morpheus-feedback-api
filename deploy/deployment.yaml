@@ -14,17 +14,17 @@ spec:
       labels:
         app: morpheus-feedback-api
     spec:
+      imagePullSecrets:
+        - name: morpheus-pull-secret
       containers:
         - name: flask-service
           image: quay.io/olavtar/morpheus-feedback-api:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5001
           env:
             - name: ARGILLA_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: argilla-secrets
-                  key: api_key
+              value: argilla.apikey
             - name: ARGILLA_API_URL
               value: "http://localhost:6900"   # Internal Argilla endpoint
         - name: argilla-server
@@ -35,10 +35,7 @@ spec:
             - name: USERNAME
               value: argilla
             - name: PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: argilla_password
-                  name: argilla-secrets
+              value: "12345678"
           envFrom:
             - configMapRef:
                 name: argilla-config
@@ -73,17 +70,12 @@ spec:
 
             - name: xpack.security.enabled
               value: "false"
-
-
         - name: postgresql
           image: postgres:13
           env:
             - name: POSTGRES_USER
-              value: "argilla"
+              value: postgres
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: argilla-secrets
-                  key: postgres_password
+              value: postgres
             - name: POSTGRES_DB
-              value: "argilla_db"
+              value: argilla
