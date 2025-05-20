@@ -111,33 +111,3 @@ def check_feedback_exists(reportId):
             f"Error checking feedback for reportId '{reportId}': {e}"
         )
         return False
-
-# def check_feedback_exists(reportId):
-#     """
-#     Checks if feedback has already been submitted for a given report ID in Argilla.
-#     """
-#     try:
-#         client = current_app.argilla_client
-#         ws = current_app.config['ARGILLA_WORKSPACE']
-#         ds_name = current_app.config['ARGILLA_DATASET']
-#
-#         print(f"Connecting to Argilla: Workspace={ws}, Dataset={ds_name}")
-#
-#         # Load the dataset using SDK
-#         dataset = client.datasets(name=ds_name, workspace=ws)
-#         if not dataset:
-#             print("Dataset not found.")
-#             return False
-#
-#         # Query records using SDK (metadata.reportId should match your field)
-#         existing_records = [
-#             record for record in dataset.records()
-#             if record.metadata and record.metadata.get("reportId") == reportId
-#         ]
-#
-#         print(f"Existing feedback count for reportId {reportId}: {len(existing_records)}")
-#         return len(existing_records) > 0
-#
-#     except Exception as e:
-#         current_app.logger.error(f"Error checking feedback for reportId '{reportId}': {str(e)}")
-#         return False

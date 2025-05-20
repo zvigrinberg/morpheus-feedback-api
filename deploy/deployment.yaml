@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: flask-service
-          image: your-registry/argilla-feedback-gateway:latest
+          image: quay.io/olavtar/morpheus-feedback-api:latest
           ports:
             - containerPort: 5001
           env:
