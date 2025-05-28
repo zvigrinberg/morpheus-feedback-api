@@ -19,7 +19,7 @@ spec:
       containers:
         - name: flask-service
           image: quay.io/olavtar/morpheus-feedback-api:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 5001
           env:
@@ -29,6 +29,7 @@ spec:
               value: "http://localhost:6900"   # Internal Argilla endpoint
         - name: argilla-server
           image: argilla/argilla-server:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 6900
           env:
@@ -40,7 +41,8 @@ spec:
             - configMapRef:
                 name: argilla-config
         - name: argilla-worker
-          image: argilla/argilla-worker:latest
+          image: argilla/argilla-server:latest
+          imagePullPolicy: IfNotPresent
           command: ["bash","-c","python -m argilla_server worker --num-workers $BACKGROUND_NUM_WORKERS"]
           envFrom:
             - configMapRef:
@@ -50,8 +52,10 @@ spec:
               value: "2"
         - name: redis
           image: redis:6
+          imagePullPolicy: IfNotPresent
         - name: elasticsearch
-          image: docker.elastic.co/elasticsearch/elasticsearch:7.17.3
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+          imagePullPolicy: IfNotPresent
           env:
             - name: node.name
               value: "elasticsearch"
@@ -72,6 +76,7 @@ spec:
               value: "false"
         - name: postgresql
           image: postgres:13
+          imagePullPolicy: IfNotPresent
           env:
             - name: POSTGRES_USER
               value: postgres
