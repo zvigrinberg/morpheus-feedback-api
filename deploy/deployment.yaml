@@ -14,6 +14,7 @@ spec:
       labels:
         app: morpheus-feedback-api
     spec:
+      serviceAccountName: argilla
       imagePullSecrets:
         - name: morpheus-pull-secret
       containers:
