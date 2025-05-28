@@ -14,36 +14,36 @@ spec:
       labels:
         app: morpheus-feedback-api
     spec:
+      serviceAccountName: argilla
+      imagePullSecrets:
+        - name: morpheus-pull-secret
       containers:
         - name: flask-service
           image: quay.io/olavtar/morpheus-feedback-api:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 5001
           env:
             - name: ARGILLA_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: argilla-secrets
-                  key: api_key
+              value: argilla.apikey
             - name: ARGILLA_API_URL
               value: "http://localhost:6900"   # Internal Argilla endpoint
         - name: argilla-server
           image: argilla/argilla-server:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 6900
           env:
             - name: USERNAME
               value: argilla
             - name: PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: argilla_password
-                  name: argilla-secrets
+              value: "12345678"
           envFrom:
             - configMapRef:
                 name: argilla-config
         - name: argilla-worker
-          image: argilla/argilla-worker:latest
+          image: argilla/argilla-server:latest
+          imagePullPolicy: IfNotPresent
           command: ["bash","-c","python -m argilla_server worker --num-workers $BACKGROUND_NUM_WORKERS"]
           envFrom:
             - configMapRef:
@@ -53,8 +53,10 @@ spec:
               value: "2"
         - name: redis
           image: redis:6
+          imagePullPolicy: IfNotPresent
         - name: elasticsearch
-          image: docker.elastic.co/elasticsearch/elasticsearch:7.17.3
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+          imagePullPolicy: IfNotPresent
           env:
             - name: node.name
               value: "elasticsearch"
@@ -73,17 +75,13 @@ spec:
 
             - name: xpack.security.enabled
               value: "false"
-
-
         - name: postgresql
           image: postgres:13
+          imagePullPolicy: IfNotPresent
           env:
             - name: POSTGRES_USER
-              value: "argilla"
+              value: postgres
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: argilla-secrets
-                  key: postgres_password
+              value: postgres
             - name: POSTGRES_DB
-              value: "argilla_db"
+              value: argilla
